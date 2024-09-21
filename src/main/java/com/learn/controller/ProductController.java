@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.learn.dto.ProductDto;
+import com.learn.exception.AlreadyExistsException;
 import com.learn.exception.ResourceNotFoundException;
 import com.learn.model.Product;
 import com.learn.request.AddProductRequest;
@@ -55,8 +56,8 @@ public class ProductController {
 			Product theProduct = productService.addProduct(product);
 			ProductDto productDto = productService.convertToDto(theProduct);
 			return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Product added successfully!", productDto));
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("An error occurred while adding the product", null));
+		} catch (AlreadyExistsException e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse(e.getMessage(), null));
 		}
 	}
 	
