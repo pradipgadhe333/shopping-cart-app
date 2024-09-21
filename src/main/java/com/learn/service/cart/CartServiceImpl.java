@@ -1,12 +1,16 @@
 package com.learn.service.cart;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import com.learn.dto.CartDto;
 import com.learn.exception.ResourceNotFoundException;
 import com.learn.model.Cart;
+import com.learn.model.User;
 import com.learn.repository.CartItemRepository;
 import com.learn.repository.CartRepository;
 
@@ -20,6 +24,7 @@ public class CartServiceImpl implements CartService {
 	//dependency injection
 	private final CartRepository cartRepository; 
 	private final CartItemRepository cartItemRepository;
+	private final ModelMapper modelMapper;
 	private final AtomicLong cartIdGenerator = new AtomicLong(0);
 
 	@Override
@@ -32,15 +37,16 @@ public class CartServiceImpl implements CartService {
 		return cartRepository.save(cart);
 	}
 
-	@Override
 	@Transactional
+	@Override
 	public void clearCart(Long id) {
-		Cart cart = getCart(id);
-		cartItemRepository.deleteAllByCartId(id);
-		cart.getCartItems().clear();
-		cartRepository.deleteById(id);
-		
+	    Cart cart = getCart(id);
+	    cartItemRepository.deleteAllByCartId(id);
+	    cart.clearCart();
+	    cartRepository.deleteById(id);  // Delete the cart itself
+	    
 	}
+
 
 	@Override
 	public BigDecimal getTotalAmount(Long id) {
@@ -49,11 +55,23 @@ public class CartServiceImpl implements CartService {
 	}
 	
 	@Override
-	public Long initializeNewCart() {
-		Cart newCart = new Cart();
-		Long newCartId = cartIdGenerator.incrementAndGet();
-		newCart.setId(newCartId);
-		return cartRepository.save(newCart).getId();
+	public Cart initializeNewCart(User user) {
+		return Optional.ofNullable(getCartByUserId(user.getId()))
+				.orElseGet(() -> {
+					Cart cart = new Cart();
+					cart.setUser(user);
+					return cartRepository.save(cart);
+				});
+	}
+
+	@Override
+	public Cart getCartByUserId(Long userId) {
+		return cartRepository.findByUserId(userId);
+	}
+	
+	@Override
+	public CartDto convertToDto(Cart cart) {
+		return modelMapper.map(cart, CartDto.class);
 	}
 	
 }

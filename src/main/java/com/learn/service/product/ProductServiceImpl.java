@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.learn.dto.ImageDto;
 import com.learn.dto.ProductDto;
+import com.learn.exception.AlreadyExistsException;
 import com.learn.exception.ResourceNotFoundException;
 import com.learn.model.Category;
 import com.learn.model.Image;
@@ -41,6 +42,10 @@ public class ProductServiceImpl implements ProductService {
 		// If No, then save it as a new category
 		// Then set as the new product category.
 		
+		if(productExists(request.getName(), request.getBrand())){
+			throw new AlreadyExistsException(request.getBrand()+" "+request.getName()+" already exists, you may update this product instead!");
+		}
+		
 		Category category = Optional.ofNullable(categoryRepository.findByName(request.getCategory().getName()))
 				.orElseGet(()->{
 					Category newCategory = new Category(request.getCategory().getName());
@@ -48,6 +53,10 @@ public class ProductServiceImpl implements ProductService {
 				});
 		request.setCategory(category);
 		return productRepository.save(createProduct(request, category));
+	}
+	
+	private boolean productExists(String name, String brand) {
+		return productRepository.existsByNameAndBrand(name, brand);
 	}
 	
 	private Product createProduct(AddProductRequest request, Category category) {
