@@ -1,5 +1,7 @@
 package com.learn.model;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import org.hibernate.annotations.NaturalId;
@@ -10,6 +12,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
@@ -42,6 +47,12 @@ public class User {
 	
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER) //orders are fetched automatically when the user is fetched because of EAGER fetch type
 	private List<Order> orders;
+	
+	@ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+	@JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id" ),
+				inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id")
+			)
+	private Collection<Role> roles = new HashSet<>();
 	
 }
 
